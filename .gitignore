@@ -6,3 +6,4 @@ gradlew.bat
 /local.properties
 /build
 /*.iml
+app/src/main/res/values/google_maps_api.xml

@@ -10,6 +10,12 @@
         android:layout_height="match_parent"
         android:layout_above="@+id/progress_bar"/>
 
+    <com.google.android.gms.maps.MapView
+        android:id="@+id/vrp_mapview"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_above="@+id/progress_bar"/>
+
     <ProgressBar
         android:id="@+id/progress_bar"
         android:layout_width="match_parent"

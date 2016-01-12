@@ -35,7 +35,12 @@ import android.view.ViewGroup;
 import android.widget.ProgressBar;
 import android.widget.Toast;
 
+import com.google.android.gms.maps.GoogleMap;
+import com.google.android.gms.maps.MapView;
+import com.google.android.gms.maps.OnMapReadyCallback;
+
 import org.optaplanner.examples.vehiclerouting.domain.VehicleRoutingSolution;
+import org.optaplanner.examples.vehiclerouting.domain.location.DistanceType;
 import org.optaplanner.examples.vehiclerouting.persistence.VehicleRoutingImporter;
 import org.tomasdavid.vehicleroutingproblem.components.AboutAppDialog;
 import org.tomasdavid.vehicleroutingproblem.components.LegendDialog;
@@ -54,7 +59,7 @@ import java.io.IOException;
  *
  * @author Tomas David
  */
-public class VrpFragment extends Fragment {
+public class VrpFragment extends Fragment implements OnMapReadyCallback {
 
     /**
      * Class tag.
@@ -85,6 +90,7 @@ public class VrpFragment extends Fragment {
      * Algorithm for calculation.
      */
     private String algorithm;
+    private MapView vrp_mapview;
 
     /**
      * Default constructor.
@@ -104,9 +110,9 @@ public class VrpFragment extends Fragment {
      */
     public void setVrs(VehicleRoutingSolution vrs) {
         this.vrs = vrs;
-        VrpView view = (VrpView) getActivity().findViewById(R.id.vrp_view);
-        view.setActualSolution(vrs);
-        view.invalidate();
+        VrpView vrpView = (VrpView) getActivity().findViewById(R.id.vrp_view);
+        vrpView.setActualSolution(vrs);
+        vrpView.invalidate();
 
     }
 
@@ -147,12 +153,30 @@ public class VrpFragment extends Fragment {
         progressBarTask = new ProgressBarTask(this);
     }
 
+    @Override
+    public void onResume() {
+        super.onResume();
+        vrp_mapview.onResume();
+    }
+
     /**
      * {@inheritDoc}
      */
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        return inflater.inflate(R.layout.fragment_vrp, container, false);
+        View view = inflater.inflate(R.layout.fragment_vrp, container, false);
+        if(DistanceType.ROAD_DISTANCE == vrs.getDistanceType()) {
+            view.findViewById(R.id.vrp_view).setVisibility(View.GONE);
+            vrp_mapview = (MapView) view.findViewById(R.id.vrp_mapview);
+            vrp_mapview.onCreate(savedInstanceState);
+            vrp_mapview.getMapAsync(this);
+        }
+        else{
+            view.findViewById(R.id.vrp_mapview).setVisibility(View.GONE);
+        }
+
+
+        return view;
     }
 
     /**
@@ -234,5 +258,34 @@ public class VrpFragment extends Fragment {
         }
 
         return super.onOptionsItemSelected(item);
+    }
+
+    @Override
+    public void onMapReady(GoogleMap googleMap) {
+
+    }
+
+    @Override
+    public void onPause() {
+        super.onPause();
+        vrp_mapview.onPause();
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        vrp_mapview.onDestroy();
+    }
+
+    @Override
+    public void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+        vrp_mapview.onSaveInstanceState(outState);
+    }
+
+    @Override
+    public void onLowMemory() {
+        super.onLowMemory();
+        vrp_mapview.onLowMemory();
     }
 }

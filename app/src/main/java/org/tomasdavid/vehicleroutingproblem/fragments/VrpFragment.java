@@ -38,9 +38,12 @@ import android.widget.Toast;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.MapView;
 import com.google.android.gms.maps.OnMapReadyCallback;
+import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.MarkerOptions;
 
 import org.optaplanner.examples.vehiclerouting.domain.VehicleRoutingSolution;
 import org.optaplanner.examples.vehiclerouting.domain.location.DistanceType;
+import org.optaplanner.examples.vehiclerouting.domain.location.Location;
 import org.optaplanner.examples.vehiclerouting.persistence.VehicleRoutingImporter;
 import org.tomasdavid.vehicleroutingproblem.components.AboutAppDialog;
 import org.tomasdavid.vehicleroutingproblem.components.LegendDialog;
@@ -91,6 +94,7 @@ public class VrpFragment extends Fragment implements OnMapReadyCallback {
      */
     private String algorithm;
     private MapView vrp_mapview;
+    private GoogleMap googleMap;
 
     /**
      * Default constructor.
@@ -111,6 +115,7 @@ public class VrpFragment extends Fragment implements OnMapReadyCallback {
     public void setVrs(VehicleRoutingSolution vrs) {
         this.vrs = vrs;
         if(DistanceType.ROAD_DISTANCE == vrs.getDistanceType()) {
+            showOnMap(vrs);
         }
         else{
             VrpView vrpView = (VrpView) getActivity().findViewById(R.id.vrp_view);
@@ -267,7 +272,7 @@ public class VrpFragment extends Fragment implements OnMapReadyCallback {
 
     @Override
     public void onMapReady(GoogleMap googleMap) {
-
+        this.googleMap = googleMap;
     }
 
     @Override
@@ -299,6 +304,12 @@ public class VrpFragment extends Fragment implements OnMapReadyCallback {
         super.onLowMemory();
         if (vrp_mapview != null) {
             vrp_mapview.onLowMemory();
+        }
+    }
+
+    private void showOnMap(VehicleRoutingSolution vrs){
+        for(Location location : vrs.getLocationList()){
+            googleMap.addMarker(new MarkerOptions().position(new LatLng(location.getLatitude(), location.getLongitude())));
         }
     }
 }

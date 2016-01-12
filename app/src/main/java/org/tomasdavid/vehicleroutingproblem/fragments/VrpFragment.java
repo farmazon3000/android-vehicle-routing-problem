@@ -110,10 +110,13 @@ public class VrpFragment extends Fragment implements OnMapReadyCallback {
      */
     public void setVrs(VehicleRoutingSolution vrs) {
         this.vrs = vrs;
-        VrpView vrpView = (VrpView) getActivity().findViewById(R.id.vrp_view);
-        vrpView.setActualSolution(vrs);
-        vrpView.invalidate();
-
+        if(DistanceType.ROAD_DISTANCE == vrs.getDistanceType()) {
+        }
+        else{
+            VrpView vrpView = (VrpView) getActivity().findViewById(R.id.vrp_view);
+            vrpView.setActualSolution(vrs);
+            vrpView.invalidate();
+        }
     }
 
     /**
@@ -156,7 +159,9 @@ public class VrpFragment extends Fragment implements OnMapReadyCallback {
     @Override
     public void onResume() {
         super.onResume();
-        vrp_mapview.onResume();
+        if (vrp_mapview != null) {
+            vrp_mapview.onResume();
+        }
     }
 
     /**
@@ -268,24 +273,32 @@ public class VrpFragment extends Fragment implements OnMapReadyCallback {
     @Override
     public void onPause() {
         super.onPause();
-        vrp_mapview.onPause();
+        if (vrp_mapview != null) {
+            vrp_mapview.onPause();
+        }
     }
 
     @Override
     public void onDestroy() {
         super.onDestroy();
-        vrp_mapview.onDestroy();
+        if (vrp_mapview != null) {
+            vrp_mapview.onDestroy();
+        }
     }
 
     @Override
     public void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
-        vrp_mapview.onSaveInstanceState(outState);
+        if (vrp_mapview != null) {
+            vrp_mapview.onSaveInstanceState(outState);
+        }
     }
 
     @Override
     public void onLowMemory() {
         super.onLowMemory();
-        vrp_mapview.onLowMemory();
+        if (vrp_mapview != null) {
+            vrp_mapview.onLowMemory();
+        }
     }
 }

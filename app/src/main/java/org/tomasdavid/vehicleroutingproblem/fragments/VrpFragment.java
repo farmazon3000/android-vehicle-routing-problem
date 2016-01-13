@@ -16,6 +16,7 @@
 
 package org.tomasdavid.vehicleroutingproblem.fragments;
 
+import android.content.res.Resources;
 import android.graphics.PorterDuff;
 import android.os.AsyncTask;
 import android.os.AsyncTask.Status;
@@ -35,24 +36,31 @@ import android.view.ViewGroup;
 import android.widget.ProgressBar;
 import android.widget.Toast;
 
+import com.google.android.gms.maps.CameraUpdate;
+import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.MapView;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.LatLngBounds;
 import com.google.android.gms.maps.model.MarkerOptions;
+import com.google.android.gms.maps.model.PolylineOptions;
 
+import org.optaplanner.examples.vehiclerouting.domain.Customer;
+import org.optaplanner.examples.vehiclerouting.domain.Depot;
+import org.optaplanner.examples.vehiclerouting.domain.Vehicle;
 import org.optaplanner.examples.vehiclerouting.domain.VehicleRoutingSolution;
 import org.optaplanner.examples.vehiclerouting.domain.location.DistanceType;
 import org.optaplanner.examples.vehiclerouting.domain.location.Location;
 import org.optaplanner.examples.vehiclerouting.persistence.VehicleRoutingImporter;
-import org.tomasdavid.vehicleroutingproblem.components.AboutAppDialog;
-import org.tomasdavid.vehicleroutingproblem.components.LegendDialog;
 import org.tomasdavid.vehicleroutingproblem.MainActivity;
-import org.tomasdavid.vehicleroutingproblem.tasks.ProgressBarTask;
 import org.tomasdavid.vehicleroutingproblem.R;
 import org.tomasdavid.vehicleroutingproblem.VrpKeys;
-import org.tomasdavid.vehicleroutingproblem.tasks.VrpSolverTask;
+import org.tomasdavid.vehicleroutingproblem.components.AboutAppDialog;
+import org.tomasdavid.vehicleroutingproblem.components.LegendDialog;
 import org.tomasdavid.vehicleroutingproblem.components.VrpView;
+import org.tomasdavid.vehicleroutingproblem.tasks.ProgressBarTask;
+import org.tomasdavid.vehicleroutingproblem.tasks.VrpSolverTask;
 
 import java.io.File;
 import java.io.IOException;
@@ -308,8 +316,58 @@ public class VrpFragment extends Fragment implements OnMapReadyCallback {
     }
 
     private void showOnMap(VehicleRoutingSolution vrs){
+
+        googleMap.clear();
+
+        LatLngBounds.Builder builder = new LatLngBounds.Builder();
+
         for(Location location : vrs.getLocationList()){
-            googleMap.addMarker(new MarkerOptions().position(new LatLng(location.getLatitude(), location.getLongitude())));
+            LatLng position = new LatLng(location.getLatitude(), location.getLongitude());
+            googleMap.addMarker(new MarkerOptions().position(position).title(location.getName()));
+            builder.include(position);
+        }
+
+        CameraUpdate cameraUpdate = CameraUpdateFactory.newLatLngBounds(builder.build(), 100);
+        googleMap.animateCamera(cameraUpdate);
+
+        for (Depot depot : vrs.getDepotList()) {
+            googleMap.addMarker(new MarkerOptions().position(new LatLng(depot.getLocation().getLatitude(), depot.getLocation().getLongitude())).title("Depot"));
+        }
+
+        int colorIndex = 0;
+        Resources res = getContext().getResources();
+
+        for (Vehicle vehicle : vrs.getVehicleList()) {
+            Customer vehicleInfoCustomer = null;
+            int longestNonDepotDistance = -1;
+            for (Customer customer : vrs.getCustomerList()) {
+                if (customer.getPreviousStandstill() != null && customer.getVehicle() == vehicle) {
+                    Location previousLocation = customer.getPreviousStandstill().getLocation();
+                    Location location = customer.getLocation();
+                    PolylineOptions polylineOptions = new PolylineOptions()
+                            .add(new LatLng(previousLocation.getLatitude(), previousLocation.getLongitude()), new LatLng(location.getLatitude(), location.getLongitude()))
+                            .color(res.obtainTypedArray(R.array.vehicle_colors).getColor(colorIndex, 0));
+                    googleMap.addPolyline(polylineOptions);
+                    int distance = customer.getDistanceFromPreviousStandstill();
+
+                    if (customer.getPreviousStandstill() instanceof Customer) {
+                        if (longestNonDepotDistance < distance) {
+                            longestNonDepotDistance = distance;
+                            vehicleInfoCustomer = customer;
+                        }
+                    } else if (vehicleInfoCustomer == null) {
+                        vehicleInfoCustomer = customer;
+                    }
+
+                    // draw route back to depot
+                    if (customer.getNextCustomer() == null) {
+                        Location vehicleLocation = vehicle.getLocation();
+                        googleMap.addPolyline(new PolylineOptions().add(new LatLng(location.getLatitude(), location.getLongitude()), new LatLng(vehicleLocation.getLatitude(), vehicleLocation.getLongitude())));
+                    }
+                }
+            }
+
+            colorIndex = (colorIndex + 1) % res.obtainTypedArray(R.array.vehicle_colors).length();
         }
     }
 }
